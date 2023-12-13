@@ -1,23 +1,932 @@
 import tkinter as tk
 from tkinter import *
 import sqlite3
+from tkinter import ttk
 
 root = tk.Tk()
 root.title("Store Database")
 conn = sqlite3.connect('Store.db')
-root.geometry("700x350")
+root.geometry("500x350")
 
-def openNewWindow():
+
+def openCategory():
     newWindow = Toplevel(root)
-    newWindow.title("ProductCategory")
-    newWindow.geometry("300x300")
-    conn = sqlite3.connect('Store.db')
-    Label(newWindow)
-    r_set = conn.execute('''SELECT * from ProductCategory''');
+    newWindow.title("Product Category Info")
+    width = newWindow.winfo_screenwidth()
+    height = newWindow.winfo_screenheight()
+    newWindow.geometry("%dx%d" % (width, height))
+    r_set = conn.execute('''SELECT * FROM ProductCategory''')
     i = 0
     for rows in r_set:
         for j in range(len(rows)):
-            e = Entry(root, width=10, fg='blue')
-            e.grid(row=i, column=j)
+            e = Text(newWindow, width=15, fg='blue', bd=2, height=1)
+            e.grid(row=i+1, column=j)
             e.insert(END, rows[j])
+            e.config(state=DISABLED)
         i = i + 1
+
+        scrollbar_frame = Frame(newWindow)
+        scrollbar_frame.grid(row=1, column=len(rows) + 1, sticky=N + S)
+
+        # Create the scrollbar
+        scrollbar = ttk.Scrollbar(scrollbar_frame, orient='vertical', command=e.yview)
+        scrollbar.pack(fill=Y, side=RIGHT)
+
+        # Attach the scrollbar to the text widget
+        e['yscrollcommand'] = scrollbar.set
+
+    def insert():
+        conn = sqlite3.connect("Store.db")
+        curs = conn.cursor()
+        curs.execute("INSERT INTO ProductCategory(CategoryName) VALUES (:name)",
+        {
+            'name': entryName.get()
+        })
+
+        entryName.delete(0, END)
+
+        conn.commit()
+        conn.close()
+
+    def delete():
+        conn = sqlite3.connect("Store.db")
+        curs = conn.cursor()
+        curs.execute("DELETE FROM ProductCategory WHERE CategoryID=" + entryId.get())
+        entryId.delete(0, END)
+        conn.commit()
+        conn.close()
+
+    def refresh():
+        newWindow.destroy()
+        openCategory()
+
+    def exit():
+        newWindow.destroy()
+
+    def groupBy():
+        r_set = conn.execute(" SELECT * FROM ProductCategory ORDER BY " + comboGroupBy.get())
+        i = 0
+        for rows in r_set:
+            for j in range(len(rows)):
+                e = Text(newWindow, width=15, fg='blue', bd=2, height=1)
+                e.grid(row=i + 1, column=j)
+                e.insert(END, rows[j])
+                e.config(state=DISABLED)
+            i = i + 1
+
+    frame = tk.Frame(newWindow)
+    frame.grid(row=3, column=8, ipadx=5)
+    add_button = Button(frame, text="Add", bg="#28393a", fg="white", cursor="hand2", borderwidth=0, height=1, width=10,
+                        command=insert)
+    add_button.pack()
+
+    dlt_frame = tk.Frame(newWindow)
+    dlt_frame.grid(row=3, column=9, ipadx=5)
+    del_button = Button(dlt_frame, text="Delete", bg="#28393a", fg="white", cursor="hand2", borderwidth=0, height=1,
+                        width=10, command=delete)
+    del_button.pack()
+
+    refreshframe = tk.Frame(newWindow)
+    refreshframe.grid(row=4, column=8, ipadx=5)
+    refresh_button = Button(refreshframe, text="Refresh", bg="#28393a", fg="white", cursor="hand2", borderwidth=0,
+                            height=1, width=10, command=refresh)
+    refresh_button.pack()
+
+    exitframe = tk.Frame(newWindow)
+    exitframe.grid(row=4, column=9, ipadx=5, pady=5)
+    exit_button = Button(exitframe, text="Exit", bg="#28393a", fg="white", cursor="hand2", borderwidth=0, height=1,
+                         width=10, command=exit)
+    exit_button.pack()
+
+    #new
+
+    comboGroupByFrame = tk.Frame(newWindow)
+    comboGroupByFrame.grid(row=1, column=11, ipadx=5, pady=5)
+    comboGroupBy = ttk.Combobox(comboGroupByFrame, state="readonly", values=["CategoryID", "CategoryName"],cursor="hand2",height=0,
+                         width=20)
+    comboGroupBy.current(0)
+    comboGroupBy.pack()
+
+    groupframe = tk.Frame(newWindow)
+    groupframe.grid(row=1, column=12, ipadx=5, pady=5)
+    group_button = Button(groupframe, text="Group By", bg="#28393a", fg="white", cursor="hand2", borderwidth=0, height=0,
+                         width=10, command=groupBy)
+    group_button.pack()
+
+    fLabel = Label(newWindow, text="CategoryID")
+    sLabel = Label(newWindow, text="CategoryName")
+
+    fLabel.grid(row=0, column=0)
+    sLabel.grid(row=0, column=1)
+
+    idLabel = Label(newWindow, text="CategoryID")
+    catnameLabel = Label(newWindow, text="CategoryName")
+
+    idLabel.grid(row=1, column=7)
+    catnameLabel.grid(row=2, column=7)
+
+    entryId = Entry(newWindow, width=25, bd=2)
+    entryName = Entry(newWindow, width=25, bd=2)
+
+    entryId.grid(row=1, column=8, columnspan=3)
+    entryName.grid(row=2, column=8, columnspan=3)
+
+
+frame1 = tk.Frame(root, width=20, height=20)
+frame1.grid(row=2, column=3, pady=5, padx=60)
+table_1_button = Button(frame1, text="ProductCategory Table", bg="#28393a", fg="white", cursor="hand2",
+                        command=lambda: openCategory(), height=2, width=50)
+table_1_button.pack()
+
+
+def openProduct():
+    newWindow = Toplevel(root)
+    newWindow.title("Product Info")
+   # newWindow.geometry("800x300")
+    width = newWindow.winfo_screenwidth()
+    height = newWindow.winfo_screenheight()
+    newWindow.geometry("%dx%d" % (width, height))
+    r_set = conn.execute('''SELECT * FROM Product''')
+    i = 0
+    for rows in r_set:
+        for j in range(len(rows)):
+            e = Text(newWindow, width=15, fg='blue', bd=2,height=1)
+            e.grid(row=i+1, column=j)
+            e.insert(END, rows[j])
+            e.config(state=DISABLED)
+        i = i + 1
+
+    def insert():
+        conn = sqlite3.connect("Store.db")
+        curs = conn.cursor()
+        curs.execute("INSERT INTO Product(ProductName, ProductCategoryID, ProductInStock, ProductPrice)"
+                     " VALUES (:name,:catid,:stock,:price)",
+        {
+            'name': entryname.get(),
+            'catid': entrycatiddrop.get(),
+            'stock': entrystock.get(),
+            'price': entryprice.get()
+        })
+
+        entryname.delete(0, END)
+        entrycatiddrop.delete(0, END)
+        entrystock.delete(0, END)
+        entryprice.delete(0, END)
+
+        conn.commit()
+        conn.close()
+
+    def delete():
+        conn = sqlite3.connect("Store.db")
+        curs = conn.cursor()
+        curs.execute("DELETE FROM Product WHERE ProductID=" + entryid.get())
+        entryid.delete(0, END)
+        conn.commit()
+        conn.close()
+
+    def refresh():
+        newWindow.destroy()
+        openProduct()
+
+    def exit():
+        newWindow.destroy()
+
+    def groupBy():
+        r_set = conn.execute(" SELECT * FROM Product ORDER BY " + comboGroupBy.get())
+        i = 0
+        for rows in r_set:
+            for j in range(len(rows)):
+                e = Text(newWindow, width=15, fg='blue', bd=2, height=1)
+                e.grid(row=i + 1, column=j)
+                e.insert(END, rows[j])
+                e.config(state=DISABLED)
+            i = i + 1
+
+    comboGroupByFrame = tk.Frame(newWindow)
+    comboGroupByFrame.grid(row=1, column=11, ipadx=5, pady=5)
+    comboGroupBy = ttk.Combobox(comboGroupByFrame, state="readonly", values=["ProductID", "ProductName", "ProductCategoryID", "ProductInStock", "ProductPrice"],
+                                cursor="hand2", height=0,
+                                width=20)
+    comboGroupBy.current(0)
+    comboGroupBy.pack()
+
+    groupframe = tk.Frame(newWindow)
+    groupframe.grid(row=1, column=12, ipadx=5, pady=5)
+    group_button = Button(groupframe, text="Group By", bg="#28393a", fg="white", cursor="hand2", borderwidth=0,
+                          height=0,
+                          width=10, command=groupBy)
+    group_button.pack()
+
+    frame = tk.Frame(newWindow)
+    frame.grid(row=6, column=8, ipadx=5)
+    add_button = Button(frame, text="Add", bg="#28393a", fg="white", cursor="hand2", borderwidth=0, height=1, width=10,
+                        command=insert)
+    add_button.pack()
+
+    dltframe = tk.Frame(newWindow)
+    dltframe.grid(row=6, column=9, ipadx=5)
+    del_button = Button(dltframe, text="Delete", bg="#28393a", fg="white", cursor="hand2", borderwidth=0, height=1,
+                        width=10, command=delete)
+    del_button.pack()
+
+    refreshframe = tk.Frame(newWindow)
+    refreshframe.grid(row=7, column=8, ipadx=5)
+    refresh_button = Button(refreshframe, text="Refresh", bg="#28393a", fg="white", cursor="hand2", borderwidth=0,
+                            height=1, width=10, command=refresh)
+    refresh_button.pack()
+
+    exitframe = tk.Frame(newWindow)
+    exitframe.grid(row=7, column=9, ipadx=5, pady=5)
+    exit_button = Button(exitframe, text="Exit", bg="#28393a", fg="white", cursor="hand2", borderwidth=0, height=1,
+                         width=10, command=exit)
+    exit_button.pack()
+
+    fLabel = Label(newWindow, text="ProductID")
+    sLabel = Label(newWindow, text="ProductName")
+    tLabel = Label(newWindow, text="ProductCatID")
+    foLabel = Label(newWindow, text="ProductInStock")
+    fiLabel = Label(newWindow, text="ProductPrice")
+
+    fLabel.grid(row=0, column=0)
+    sLabel.grid(row=0, column=1)
+    tLabel.grid(row=0, column=2)
+    foLabel.grid(row=0, column=3)
+    fiLabel.grid(row=0, column=4)
+
+    idLabel = Label(newWindow, text="ProductID")
+    nameLabel = Label(newWindow, text="ProductName")
+    catidLabel = Label(newWindow, text="ProductCatID")
+    stockLabel = Label(newWindow, text="ProductInStock")
+    priceLabel = Label(newWindow, text="ProductPrice")
+
+    idLabel.grid(row=1, column=7)
+    nameLabel.grid(row=2, column=7)
+    catidLabel.grid(row=3, column=7)
+    stockLabel.grid(row=4, column=7)
+    priceLabel.grid(row=5, column=7)
+
+    entryid = Entry(newWindow, width=25, bd=2)
+    entryname = Entry(newWindow, width=25, bd=2)
+
+    options = {
+        "1(Shoes)": 1,
+        "2(Clothes)": 2,
+        "3(Acsessories)":3
+    }
+
+    def on_select(event):
+        selected_value = options[entrycatiddrop.get()]
+
+    entrycatiddrop = ttk.Combobox(newWindow, width=22, values=list(options.keys()))
+    entrycatiddrop.bind("<<ComboboxSelected>>", on_select)
+
+    #entrycatiddrop = ttk.Combobox(newWindow, width=22, value=["1(Clothes)", "2(Shoes)", "3(Accsesories)"])
+    #entrycatid = Entry(newWindow, width=25, bd=5)
+    entrystock = Entry(newWindow, width=25, bd=2)
+    entryprice = Entry(newWindow, width=25, bd=2)
+
+    entryid.grid(row=1, column=8, columnspan=3)
+    entryname.grid(row=2, column=8, columnspan=3)
+    #entrycatid.grid(row=3, column=8, columnspan=3)
+    entrycatiddrop.grid(row=3, column=8, columnspan=3)
+    entrystock.grid(row=4, column=8, columnspan=3)
+    entryprice.grid(row=5, column=8, columnspan=3)
+
+
+frame2 = tk.Frame(root, width=50, height=50)
+frame2.grid(row=3, column=3, pady=5, padx=10)
+table_2_button = Button(frame2, text="Product Table", bg="#28393a", fg="white", cursor="hand2",
+                        command=lambda: openProduct(), height=2, width=50)
+table_2_button.pack()
+
+
+def openCustomer():
+    newWindow = Toplevel(root)
+    newWindow.title("Customer Info")
+    #newWindow.geometry("800x350")
+    width = newWindow.winfo_screenwidth()
+    height = newWindow.winfo_screenheight()
+    newWindow.geometry("%dx%d" % (width, height))
+    canvas = Canvas(newWindow)
+    canvas.pack(side=LEFT, fill=BOTH, expand=True)
+
+    scrollbar = ttk.Scrollbar(newWindow, orient=VERTICAL, command=canvas.yview)
+    scrollbar.pack(side=RIGHT, fill=Y)
+
+    canvas.configure(yscrollcommand=scrollbar.set)
+    canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+
+    framee = Frame(canvas)
+    canvas.create_window((0, 0), window=framee, anchor="nw")
+
+    r_set = conn.execute('''SELECT * FROM Customer''')
+    i = 0
+    for rows in r_set:
+        for j in range(len(rows)):
+            e = Entry(framee, width=15, fg='blue', bd=2)
+            e.grid(row=i + 1, column=j)
+            e.insert(END, rows[j])
+            e.config(state=DISABLED)
+        i = i + 1
+
+    framee.update_idletasks()
+    canvas.configure(scrollregion=canvas.bbox("all"))
+
+
+    def insert():
+        conn = sqlite3.connect("Store.db")
+        curs = conn.cursor()
+        curs.execute("INSERT INTO Customer(FirstName, LastName, CustomerTown, CustomerAddress, CustomerPhone)"
+                     " VALUES (:name,:lname,:town,:address,:phone)",
+        {
+            'name': entryname.get(),
+            'lname': entrylname.get(),
+            'town': entrytown.get(),
+            'address': entryaddress.get(),
+            'phone': entryphone.get()
+        })
+
+        entryname.delete(0, END)
+        entrylname.delete(0, END)
+        entrytown.delete(0, END)
+        entryaddress.delete(0, END)
+        entryphone.delete(0, END)
+        conn.commit()
+        conn.close()
+
+    def delete():
+        conn = sqlite3.connect("Store.db")
+        curs = conn.cursor()
+        curs.execute("DELETE FROM Customer WHERE CustomerID=" + entryid.get())
+        entryid.delete(0, END)
+        conn.commit()
+        conn.close()
+
+    def refresh():
+        newWindow.destroy()
+        openCustomer()
+
+    def exit():
+        newWindow.destroy()
+
+    def groupBy():
+        r_set = conn.execute(" SELECT * FROM Customer ORDER BY " + comboGroupBy.get())
+        i = 0
+        for rows in r_set:
+            for j in range(len(rows)):
+                e = Text(newWindow, width=15, fg='blue', bd=2, height=1)
+                e.grid(row=i + 1, column=j)
+                e.insert(END, rows[j])
+                e.config(state=DISABLED)
+            i = i + 1
+
+    comboGroupByFrame = tk.Frame(framee)
+    comboGroupByFrame.grid(row=1, column=20, ipadx=5, pady=5)
+    comboGroupBy = ttk.Combobox(comboGroupByFrame, state="readonly",
+                                values=["CustomerID", "FirstName", "LastName", "CustomerTown",
+                                        "CustomerAddress", "CustomerPhone"],
+                                cursor="hand2", height=0,
+                                width=20)
+    comboGroupBy.current(0)
+    comboGroupBy.pack()
+
+    groupframe = tk.Frame(framee)
+    groupframe.grid(row=1, column=21, ipadx=5, pady=5)
+    group_button = Button(groupframe, text="Group By", bg="#28393a", fg="white", cursor="hand2", borderwidth=0,
+                          height=0,
+                          width=10, command=groupBy)
+    group_button.pack()
+
+    instframe = tk.Frame(framee)
+    instframe.grid(row=7, column=11, padx=5, ipadx=5)
+    add_button = Button(framee, text="Add", bg="#28393a", fg="white", cursor="hand2", borderwidth=0, height=1,
+                        width=10, command=insert)
+    add_button.pack()
+
+    dltframe = tk.Frame(framee)
+    dltframe.grid(row=7, column=12, ipadx=5)
+    del_button = Button(dltframe, text="Delete", bg="#28393a", fg="white", cursor="hand2", borderwidth=0, height=1,
+                        width=10, command=delete)
+    del_button.pack()
+
+    refreshframe = tk.Frame(framee)
+    refreshframe.grid(row=8, column=11, ipadx=5)
+    refresh_button = Button(refreshframe, text="Refresh", bg="#28393a", fg="white", cursor="hand2", borderwidth=0,
+                            height=1, width=10, command=refresh)
+    refresh_button.pack()
+
+    exitframe = tk.Frame(framee)
+    exitframe.grid(row=8, column=12, ipadx=5, pady=5)
+    exit_button = Button(exitframe, text="Exit", bg="#28393a", fg="white", cursor="hand2", borderwidth=0, height=1,
+                         width=10, command=exit)
+    exit_button.pack()
+
+    fLabel = Label(framee, text="CustomerID")
+    sLabel = Label(framee, text="FirstName")
+    tLabel = Label(framee, text="LastName")
+    foLabel = Label(framee, text="Town")
+    fiLabel = Label(framee, text="Address")
+    siLabel = Label(framee, text="Phone")
+
+    fLabel.grid(row=0, column=0)
+    sLabel.grid(row=0, column=1)
+    tLabel.grid(row=0, column=2)
+    foLabel.grid(row=0, column=3)
+    fiLabel.grid(row=0, column=4)
+    siLabel.grid(row=0, column=5)
+
+    cusidLabel = Label(framee, text="CustomerID")
+    nameLabel = Label(framee, text="FirstName")
+    lnameLabel = Label(framee, text="LastName")
+    townLabel = Label(framee, text="Town")
+    addressLabel = Label(framee, text="Address")
+    phoneLabel = Label(framee, text="Phone")
+
+    cusidLabel.grid(row=1, column=7)
+    nameLabel.grid(row=2, column=7)
+    lnameLabel.grid(row=3, column=7)
+    townLabel.grid(row=4, column=7)
+    addressLabel.grid(row=5, column=7)
+    phoneLabel.grid(row=6, column=7)
+
+    entryid = Entry(framee, width=25, bd=2)
+    entryname = Entry(framee, width=25, bd=2)
+    entrylname = Entry(framee, width=25, bd=2)
+    entrytown = Entry(framee, width=25, bd=2)
+    entryaddress = Entry(framee, width=25, bd=2)
+    entryphone = Entry(framee, width=25, bd=2)
+
+    entryid.grid(row=1, column=8, columnspan=3)
+    entryname.grid(row=2, column=8, columnspan=3)
+    entrylname.grid(row=3, column=8, columnspan=3)
+    entrytown.grid(row=4, column=8, columnspan=3)
+    entryaddress.grid(row=5, column=8, columnspan=3)
+    entryphone.grid(row=6, column=8, columnspan=3)
+
+
+frame3 = tk.Frame(root, width=50, height=50)
+frame3.grid(row=4, column=3, pady=5, padx=10)
+table_3_button = Button(frame3, text="Customer Table", bg="#28393a", fg="white", cursor="hand2",
+                        command=lambda: openCustomer(), height=2, width=50)
+table_3_button.pack()
+
+
+def openEmployee():
+    newWindow = Toplevel(root)
+    newWindow.title("Employee Info")
+    #newWindow.geometry("800x350")
+    width = newWindow.winfo_screenwidth()
+    height = newWindow.winfo_screenheight()
+    newWindow.geometry("%dx%d" % (width, height))
+    r_set = conn.execute('''SELECT * from Employee''')
+    i = 0
+    for rows in r_set:
+        for j in range(len(rows)):
+            e = Text(newWindow, width=15, fg='blue', bd=2, height=1)
+            e.grid(row=i+1, column=j)
+            e.insert(END, rows[j])
+            e.config(state=DISABLED)
+        i = i + 1
+
+    def insert():
+        conn = sqlite3.connect("Store.db")
+        curs = conn.cursor()
+        curs.execute("INSERT INTO Employee(EmFirstName, EmLastName, EmTown, EmAddress, EmPhone)"
+                     " VALUES (:name,:lname,:town,:address,:phone)",
+        {
+            'name': entryemname.get(),
+            'lname': entryemlname.get(),
+            'town': entryemtown.get(),
+            'address': entryemaddress.get(),
+            'phone': entryemphone.get()
+        })
+
+        entryemname.delete(0, END)
+        entryemlname.delete(0, END)
+        entryemtown.delete(0, END)
+        entryemaddress.delete(0, END)
+        entryemphone.delete(0, END)
+
+        conn.commit()
+        conn.close()
+
+    def delete():
+        conn = sqlite3.connect("Store.db")
+        curs = conn.cursor()
+        curs.execute("DELETE FROM Employee WHERE EmployeeID=" + entryemid.get())
+        entryemid.delete(0, END)
+        conn.commit()
+        conn.close()
+
+    def refresh():
+        newWindow.destroy()
+        openEmployee()
+
+    def exit():
+        newWindow.destroy()
+
+    def groupBy():
+        r_set = conn.execute(" SELECT * FROM Employee ORDER BY " + comboGroupBy.get())
+        i = 0
+        for rows in r_set:
+            for j in range(len(rows)):
+                e = Text(newWindow, width=15, fg='blue', bd=2, height=1)
+                e.grid(row=i + 1, column=j)
+                e.insert(END, rows[j])
+                e.config(state=DISABLED)
+            i = i + 1
+
+    comboGroupByFrame = tk.Frame(newWindow)
+    comboGroupByFrame.grid(row=1, column=11, ipadx=5, pady=5)
+    comboGroupBy = ttk.Combobox(comboGroupByFrame, state="readonly",
+                                values=["EmployeeID", "EmFirstName", "EmLastName", "EmTown",
+                                        "EmAddress", "EmPhone"],
+                                cursor="hand2", height=0,
+                                width=20)
+    comboGroupBy.current(0)
+    comboGroupBy.pack()
+
+    groupframe = tk.Frame(newWindow)
+    groupframe.grid(row=1, column=12, ipadx=5, pady=5)
+    group_button = Button(groupframe, text="Group By", bg="#28393a", fg="white", cursor="hand2", borderwidth=0,
+                          height=0,
+                          width=10, command=groupBy)
+    group_button.pack()
+
+    frame = tk.Frame(newWindow)
+    frame.grid(row=7, column=8, ipadx=5)
+    add_button = Button(frame, text="Add", bg="#28393a", fg="white", cursor="hand2", borderwidth=0, height=1,
+                        width=10, command=insert)
+    add_button.pack()
+
+    dltframe = tk.Frame(newWindow)
+    dltframe.grid(row=7, column=9, ipadx=5)
+    del_button = Button(dltframe, text="Delete", bg="#28393a", fg="white", cursor="hand2", borderwidth=0, height=1,
+                        width=10, command=delete)
+    del_button.pack()
+
+    refreshframe = tk.Frame(newWindow)
+    refreshframe.grid(row=8, column=8, ipadx=5)
+    refresh_button = Button(refreshframe, text="Refresh", bg="#28393a", fg="white", cursor="hand2", borderwidth=0,
+                            height=1, width=10, command=refresh)
+    refresh_button.pack()
+
+    exitframe = tk.Frame(newWindow)
+    exitframe.grid(row=8, column=9, ipadx=5, pady=5)
+    exit_button = Button(exitframe, text="Exit", bg="#28393a", fg="white", cursor="hand2", borderwidth=0, height=1,
+                         width=10, command=exit)
+    exit_button.pack()
+
+    fLabel = Label(newWindow, text="EmployeeID")
+    sLabel = Label(newWindow, text="EmFirstName")
+    tLabel = Label(newWindow, text="EmLastName")
+    foLabel = Label(newWindow, text="EmTown")
+    fiLabel = Label(newWindow, text="EmAddress")
+    siLabel = Label(newWindow, text="EmPhone")
+
+    fLabel.grid(row=0, column=0)
+    sLabel.grid(row=0, column=1)
+    tLabel.grid(row=0, column=2)
+    foLabel.grid(row=0, column=3)
+    fiLabel.grid(row=0, column=4)
+    siLabel.grid(row=0, column=5)
+
+    empidLabel = Label(newWindow, text="EmployeeID")
+    empnameLabel = Label(newWindow, text="EmFirstName")
+    emplnameLabel = Label(newWindow, text="EmLastName")
+    emtownLabel = Label(newWindow, text="EmTown")
+    emaddressLabel = Label(newWindow, text="EmAddress")
+    emtphoneLabel = Label(newWindow, text="EmPhone")
+
+    empidLabel.grid(row=1, column=7)
+    empnameLabel.grid(row=2, column=7)
+    emplnameLabel.grid(row=3, column=7)
+    emtownLabel.grid(row=4, column=7)
+    emaddressLabel.grid(row=5, column=7)
+    emtphoneLabel.grid(row=6, column=7)
+
+    entryemid = Entry(newWindow, width=25, bd=2)
+    entryemname = Entry(newWindow, width=25, bd=2)
+    entryemlname = Entry(newWindow, width=25, bd=2)
+    entryemtown = Entry(newWindow, width=25, bd=2)
+    entryemaddress = Entry(newWindow, width=25, bd=2)
+    entryemphone = Entry(newWindow, width=25, bd=2)
+
+    entryemid.grid(row=1, column=8, columnspan=3)
+    entryemname.grid(row=2, column=8, columnspan=3)
+    entryemlname.grid(row=3, column=8, columnspan=3)
+    entryemtown.grid(row=4, column=8, columnspan=3)
+    entryemaddress.grid(row=5, column=8, columnspan=3)
+    entryemphone.grid(row=6, column=8, columnspan=3)
+
+
+frame4 = tk.Frame(root, width=50, height=50)
+frame4.grid(row=5, column=3, pady=5, padx=10)
+table_4_button = Button(frame4, text="Employee Table", bg="#28393a", fg="white", cursor="hand2",
+                        command=lambda: openEmployee(), height=2, width=50)
+table_4_button.pack()
+
+
+def openSale():
+    newWindow = Toplevel(root)
+    newWindow.title("Sale Info")
+   # newWindow.geometry("700x300")
+    width = newWindow.winfo_screenwidth()
+    height = newWindow.winfo_screenheight()
+    newWindow.geometry("%dx%d" % (width, height))
+    r_set = conn.execute('''SELECT * FROM Sale''')
+    i = 0
+    for rows in r_set:
+        for j in range(len(rows)):
+            e = Text(newWindow, width=15, fg='blue', bd=2, height=1)
+            e.grid(row=i+1, column=j)
+            e.insert(END, rows[j])
+            e.config(state=DISABLED)
+        i = i + 1
+
+    def insert():
+        conn = sqlite3.connect("Store.db")
+        curs = conn.cursor()
+        curs.execute("INSERT INTO Sale(SCustomerID, SEmployeeID, SDate) VALUES (:cusid,:empid,:date)",
+        {
+            'cusid': entrycusiddrop.get(),
+            'empid': entryemiddrop.get(),
+            'date': entrydate.get()
+        })
+        entrycusiddrop.delete(0, END)
+        entryemiddrop.delete(0, END)
+        entrydate.delete(0, END)
+        conn.commit()
+        conn.close()
+
+    def delete():
+        conn = sqlite3.connect("Store.db")
+        curs = conn.cursor()
+        curs.execute("DELETE FROM Sale WHERE SSaleID=" + entryid.get())
+        entryid.delete(0, END)
+        conn.commit()
+        conn.close()
+
+    def refresh():
+        newWindow.destroy()
+        openSale()
+
+    def exit():
+        newWindow.destroy()
+
+    def groupBy():
+        r_set = conn.execute(" SELECT * FROM Sale ORDER BY " + comboGroupBy.get())
+        i = 0
+        for rows in r_set:
+            for j in range(len(rows)):
+                e = Text(newWindow, width=15, fg='blue', bd=2,height=1)
+                e.grid(row=i + 1, column=j)
+                e.insert(END, rows[j])
+                e.config(state=DISABLED)
+            i = i + 1
+
+    comboGroupByFrame = tk.Frame(newWindow)
+    comboGroupByFrame.grid(row=1, column=11, ipadx=5, pady=5)
+    comboGroupBy = ttk.Combobox(comboGroupByFrame, state="readonly",
+                                values=["SSaleID", "SCustomerID", "SEmployeeID", "SDate"],
+                                cursor="hand2", height=0,
+                                width=20)
+    comboGroupBy.current(0)
+    comboGroupBy.pack()
+
+    groupframe = tk.Frame(newWindow)
+    groupframe.grid(row=1, column=12, ipadx=5, pady=5)
+    group_button = Button(groupframe, text="Group By", bg="#28393a", fg="white", cursor="hand2", borderwidth=0,
+                          height=0,
+                          width=10, command=groupBy)
+    group_button.pack()
+
+    frame = tk.Frame(newWindow)
+    frame.grid(row=7, column=9, ipadx=5)
+    add_button = Button(frame, text="Add", bg="#28393a", fg="white", cursor="hand2", borderwidth=0, height=1,
+                        width=10, command=insert)
+    add_button.pack()
+
+    dltframe = tk.Frame(newWindow)
+    dltframe.grid(row=7, column=10, ipadx=5)
+    del_button = Button(dltframe, text="Delete", bg="#28393a", fg="white", cursor="hand2", borderwidth=0, height=1,
+                        width=10, command=delete)
+    del_button.pack()
+
+    refreshframe = tk.Frame(newWindow)
+    refreshframe.grid(row=8, column=9, ipadx=5)
+    refresh_button = Button(refreshframe, text="Refresh", bg="#28393a", fg="white", cursor="hand2", borderwidth=0,
+                            height=1, width=10, command=refresh)
+    refresh_button.pack()
+
+    exitframe = tk.Frame(newWindow)
+    exitframe.grid(row=8, column=10, ipadx=5, pady=5)
+    exit_button = Button(exitframe, text="Exit", bg="#28393a", fg="white", cursor="hand2", borderwidth=0, height=1,
+                         width=10, command=exit)
+    exit_button.pack()
+
+    fLabel = Label(newWindow, text="SSaleID")
+    sLabel = Label(newWindow, text="SCustomerID")
+    tLabel = Label(newWindow, text="SEmployeeID")
+    foLabel = Label(newWindow, text="SDate")
+
+    fLabel.grid(row=0, column=0)
+    sLabel.grid(row=0, column=1)
+    tLabel.grid(row=0, column=2)
+    foLabel.grid(row=0, column=3)
+
+    saleidLabel = Label(newWindow, text="SSaleID")
+    custidLabel = Label(newWindow, text="SCustomerID")
+    empidLabel = Label(newWindow, text="SEmployeeID")
+    dateLabel = Label(newWindow, text="SDate")
+
+    saleidLabel.grid(row=1, column=7)
+    custidLabel.grid(row=2, column=7)
+    empidLabel.grid(row=3, column=7)
+    dateLabel.grid(row=4, column=7)
+
+    optionsCustomer = {
+            "1(Martin)": 1,
+            "2(Georgi)": 2,
+            "3(Anna)": 3
+        }
+
+    def on_select(event):
+        selected_value = optionsCustomer[entrycusiddrop.get()]
+
+    entrycusiddrop = ttk.Combobox(newWindow, width=22, values=list(optionsCustomer.keys()))
+    entrycusiddrop.bind("<<ComboboxSelected>>", on_select)
+
+    optionsEmployee = {
+        "1(Konstantin)": 1,
+        "2(Petar)": 2,
+        "3(Mariana)": 3
+    }
+
+    def on_select(event):
+        selected_value = optionsEmployee[entryemiddrop.get()]
+
+    entryemiddrop = ttk.Combobox(newWindow, width=22, values=list(optionsEmployee.keys()))
+    entryemiddrop.bind("<<ComboboxSelected>>", on_select)
+
+    entryid = Entry(newWindow, width=25, bd=2)
+    #entrycus = Entry(newWindow, width=25)
+    #entryemp = Entry(newWindow, width=25)
+    entrydate = Entry(newWindow, width=25, bd=2)
+
+    entryid.grid(row=1, column=8, columnspan=3)
+    entrycusiddrop.grid(row=2, column=8, columnspan=3)
+    entryemiddrop.grid(row=3, column=8, columnspan=3)
+    entrydate.grid(row=4, column=8, columnspan=3)
+
+
+frame5 = tk.Frame(root, width=50, height=50)
+frame5.grid(row=6, column=3, pady=5, padx=10)
+table_5_button = Button(frame5, text="Sale Table", bg="#28393a", fg="white", cursor="hand2",
+                        command=lambda: openSale(), height=2, width=50)
+table_5_button.pack()
+
+
+def openSaleProduct():
+    newWindow = Toplevel(root)
+    newWindow.title("Sale Product Info")
+    #newWindow.geometry("700x300")
+    width = newWindow.winfo_screenwidth()
+    height = newWindow.winfo_screenheight()
+    newWindow.geometry("%dx%d" % (width, height))
+    r_set = conn.execute('''SELECT * FROM SaleProduct''')
+    i = 0
+    for rows in r_set:
+        for j in range(len(rows)):
+            e = Text(newWindow, width=15, fg='blue', bd=2, height=1)
+            e.grid(row=i+1, column=j)
+            e.insert(END, rows[j])
+            e.config(state=DISABLED)
+        i = i + 1
+
+    def insert():
+        conn = sqlite3.connect("Store.db")
+        curs = conn.cursor()
+        curs.execute("INSERT INTO SaleProduct(SProductID, Quantity) VALUES (:prodid,:quantity)",
+        {
+            'prodid': entryprociddrop.get(),
+            'quantity': entryQuantity.get()
+        })
+        entryprociddrop.delete(0, END)
+        entryQuantity.delete(0, END)
+
+        conn.commit()
+        conn.close()
+
+    def delete():
+        conn = sqlite3.connect("Store.db")
+        curs = conn.cursor()
+        curs.execute("DELETE FROM SaleProduct WHERE SaleID=" + entryId.get())
+        entryId.delete(0, END)
+        conn.commit()
+        conn.close()
+
+    def refresh():
+        newWindow.destroy()
+        openSaleProduct()
+
+    def exit():
+        newWindow.destroy()
+
+    def groupBy():
+        r_set = conn.execute(" SELECT * FROM SaleProduct ORDER BY " + comboGroupBy.get())
+        i = 0
+        for rows in r_set:
+            for j in range(len(rows)):
+                e = Text(newWindow, width=15, fg='blue', bd=2,height=1)
+                e.grid(row=i + 1, column=j)
+                e.insert(END, rows[j])
+                e.config(state=DISABLED)
+            i = i + 1
+
+    comboGroupByFrame = tk.Frame(newWindow)
+    comboGroupByFrame.grid(row=1, column=11, ipadx=5, pady=5)
+    comboGroupBy = ttk.Combobox(comboGroupByFrame, state="readonly",
+                                values=["SaleID", "SProductID", "Quantity"],
+                                cursor="hand2", height=0,
+                                width=20)
+    comboGroupBy.current(0)
+    comboGroupBy.pack()
+
+    groupframe = tk.Frame(newWindow)
+    groupframe.grid(row=1, column=12, ipadx=5, pady=5)
+    group_button = Button(groupframe, text="Group By", bg="#28393a", fg="white", cursor="hand2", borderwidth=0,
+                          height=0,
+                          width=10, command=groupBy)
+    group_button.pack()
+
+
+    frame = tk.Frame(newWindow)
+    frame.grid(row=4, column=8, ipadx=5)
+    add_button = Button(frame, text="Add", bg="#28393a", fg="white", cursor="hand2", borderwidth=0, height=1,
+                        width=10, command=insert)
+    add_button.pack()
+
+    dltframe = tk.Frame(newWindow)
+    dltframe.grid(row=4, column=9, ipadx=5)
+    del_button = Button(dltframe, text="Delete", bg="#28393a", fg="white", cursor="hand2", borderwidth=0, height=1,
+                        width=10, command=delete)
+    del_button.pack()
+
+    refreshframe = tk.Frame(newWindow)
+    refreshframe.grid(row=5, column=8, ipadx=5)
+    refresh_button = Button(refreshframe, text="Refresh", bg="#28393a", fg="white", cursor="hand2", borderwidth=0,
+                            height=1, width=10, command=refresh)
+    refresh_button.pack()
+
+    exitframe = tk.Frame(newWindow)
+    exitframe.grid(row=5, column=9, ipadx=5, pady=5)
+    exit_button = Button(exitframe, text="Exit", bg="#28393a", fg="white", cursor="hand2", borderwidth=0, height=1,
+                         width=10, command=exit)
+    exit_button.pack()
+
+    fLabel = Label(newWindow, text="SaleID")
+    sLabel = Label(newWindow, text="SProductID")
+    tLabel = Label(newWindow, text="Quantity")
+
+    fLabel.grid(row=0, column=0)
+    sLabel.grid(row=0, column=1)
+    tLabel.grid(row=0, column=2)
+
+    idLabel = Label(newWindow, text="SSaleID")
+    productLabel = Label(newWindow, text="SProductID")
+    quantityLabel = Label(newWindow, text="Quantity")
+
+    idLabel.grid(row=1, column=7)
+    productLabel.grid(row=2, column=7)
+    quantityLabel.grid(row=3, column=7)
+
+    optionsProduct = {
+        "1(Nike Air 1)": 1,
+        "2(Adidas runners)": 2,
+        "3(Nike White T)": 3,
+        "4(Black Wallet)": 4
+    }
+
+    def on_select(event):
+        selected_value = optionsProduct[entryprociddrop.get()]
+
+    entryprociddrop = ttk.Combobox(newWindow, width=22, values=list(optionsProduct.keys()))
+    entryprociddrop.bind("<<ComboboxSelected>>", on_select)
+
+    entryId = Entry(newWindow, width=25, bd=2)
+    #entryProdID = Entry(newWindow, width=25)
+    entryQuantity = Entry(newWindow, width=25, bd=2)
+
+    entryId.grid(row=1, column=8, columnspan=3)
+    entryprociddrop.grid(row=2, column=8, columnspan=3)
+    entryQuantity.grid(row=3, column=8, columnspan=3)
+
+
+frame6 = tk.Frame(root, width=50, height=50)
+frame6.grid(row=7, column=3, pady=5, padx=10)
+table_6_button = Button(frame6, text="SaleProduct Table", bg="#28393a", fg="white", cursor="hand2",
+                        command=lambda: openSaleProduct(), height=2, width=50)
+table_6_button.pack()
+
+root.mainloop()
